@@ -64,7 +64,7 @@ bnb_config = BitsAndBytesConfig(
     bnb_4bit_compute_dtype=torch.bfloat16
 )
 
-DEFAULT_PAD_TOKEN = "[PAD]"
+DEFAULT_PAD_TOKEN = "</s>"
 DEFAULT_EOS_TOKEN = "</s>"
 DEFAULT_BOS_TOKEN = "<s>"
 DEFAULT_UNK_TOKEN = "<unk>"
@@ -116,7 +116,7 @@ def train(
     resume_from_checkpoint: str = None,  # either training checkpoint or final adapter
     prompt_template_name: str = "alpaca",  # The prompt template to use, will default to alpaca.
     # experimental
-    use_landmark: bool = False,
+    use_landmark: bool = True,
     use_rope_scaled: bool = False,
 ):
     if int(os.environ.get("LOCAL_RANK", 0)) == 0:
@@ -188,7 +188,6 @@ def train(
                                                   padding_side="right",
                                                   use_fast=False)
 
-        mem_token = "<landmark>"
         special_tokens_dict = dict()
         if tokenizer.pad_token is None:
             special_tokens_dict["pad_token"] = DEFAULT_PAD_TOKEN
@@ -198,7 +197,6 @@ def train(
             special_tokens_dict["bos_token"] = DEFAULT_BOS_TOKEN
         if tokenizer.unk_token is None:
             special_tokens_dict["unk_token"] = DEFAULT_UNK_TOKEN
-        special_tokens_dict["additional_special_tokens"] = [mem_token]
 
         smart_tokenizer_and_embedding_resize(
             special_tokens_dict=special_tokens_dict,
@@ -206,8 +204,6 @@ def train(
             model=model,
         )
 
-        mem_id = tokenizer.convert_tokens_to_ids(mem_token)
-        model.set_mem_id(mem_id)
     elif use_rope_scaled:
         from experiments.llama_rope_scaled_monkey_patch import replace_llama_rope_with_scaled_rope
         replace_llama_rope_with_scaled_rope()
@@ -276,7 +272,7 @@ def train(
         return result
 
     def generate_and_tokenize_prompt(data_point):
-        full_prompt = data_point["prompt"] + "\n" + data_point["response"]
+        full_prompt = data_point["prompt"] + "\n" + data_point["response"] + DEFAULT_EOS_TOKEN
         tokenized_full_prompt = tokenize(full_prompt)
         if not train_on_inputs:
             user_prompt = data_point["prompt"]

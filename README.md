@@ -112,7 +112,7 @@ For gpt_bigcode
 
 We can also tweak our hyperparameters (similar to alpaca-lora):
 
-    python3 finetune.py \
+    CUDA_VISIBLE_DEVICES=0,1 python3 finetune.py \
         --base_model meta-llama/Llama-2-70b-hf \
         --data_path 'otherside_train.json' \
         --output_dir './otherside_f' \
