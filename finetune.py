@@ -175,8 +175,7 @@ def train(
         bnb_config.bnb_4bit_use_double_quant = False
 
     if use_landmark:
-        from experiments.landmark import LlamaForCausalLM
-        model = LlamaForCausalLM.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             base_model,
             quantization_config=bnb_config,
             device_map=device_map,
@@ -363,14 +362,12 @@ def train(
             num_train_epochs=num_epochs,
             learning_rate=learning_rate,
             bf16=True,
-            logging_steps=10,
+            logging_steps=1,
             optim="paged_adamw_8bit",
             evaluation_strategy="steps" if val_set_size > 0 else "no",
-            save_strategy="steps",
-            eval_steps=100 if val_set_size > 0 else None,
-            save_steps=100,
+            save_strategy="epoch",
             output_dir=output_dir,
-            save_total_limit=3,
+            save_total_limit=2,
             #load_best_model_at_end=True if val_set_size > 0 else False,
             load_best_model_at_end=False,
             ddp_find_unused_parameters=False if ddp else None,
